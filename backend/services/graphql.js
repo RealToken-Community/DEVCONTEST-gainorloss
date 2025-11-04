@@ -84,7 +84,7 @@ async function fetchAllATokenBalances(userAddress) {
         hasMore = false;
       } else {
         skip += LIMIT;
-        console.log(`⏭️  Pagination suivante: skip=${skip}`);
+        console.log(`⏭️  Pagination suivante2: skip=${skip}`);
       }
     }
     
@@ -132,7 +132,7 @@ async function fetchAllVTokenBalances(userAddress, req = null) {
         hasMore = false;
       } else {
         skip += LIMIT;
-        console.log(`⏭️  Pagination suivante: skip=${skip}`);
+        console.log(`⏭️  Pagination suivante3: skip=${skip}`);
       }
     }
     

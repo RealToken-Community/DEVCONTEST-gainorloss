@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
 import { TOKENS } from '../utils/constants';
 import Chart from '../components/Chart';
@@ -121,6 +121,136 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isCollapsed, setCollapsed] = useState(true);
+  
+  // Filtres partagés entre FinancialSummary et TransactionsTable
+  const [selectedTokens, setSelectedTokens] = useState<string[]>(['USDC', 'WXDAI', 'WXDAI_V2']);
+  
+  // Fonction pour calculer la date range par défaut depuis les données
+  const calculateDefaultDateRange = (): { start: string; end: string } => {
+    const allDates: string[] = [];
+    
+    // Collecter toutes les dates des données V3
+    const usdcData = data?.data?.results?.[0]?.data?.interests?.USDC;
+    const wxdaiData = data?.data?.results?.[0]?.data?.interests?.WXDAI;
+    const v2Data = dataV2?.data?.results?.[0]?.data?.interests?.WXDAI;
+    
+    if (usdcData?.borrow?.dailyDetails) {
+      usdcData.borrow.dailyDetails.forEach((detail: any) => allDates.push(detail.date));
+    }
+    if (usdcData?.supply?.dailyDetails) {
+      usdcData.supply.dailyDetails.forEach((detail: any) => allDates.push(detail.date));
+    }
+    if (wxdaiData?.borrow?.dailyDetails) {
+      wxdaiData.borrow.dailyDetails.forEach((detail: any) => allDates.push(detail.date));
+    }
+    if (wxdaiData?.supply?.dailyDetails) {
+      wxdaiData.supply.dailyDetails.forEach((detail: any) => allDates.push(detail.date));
+    }
+    if (v2Data?.borrow?.dailyDetails) {
+      v2Data.borrow.dailyDetails.forEach((detail: any) => allDates.push(detail.date));
+    }
+    if (v2Data?.supply?.dailyDetails) {
+      v2Data.supply.dailyDetails.forEach((detail: any) => allDates.push(detail.date));
+    }
+    
+    // Collecter toutes les dates des transactions
+    const transactions = prepareAllTransactions();
+    if (transactions) {
+      transactions.forEach((tx: any) => {
+        const date = new Date(tx.timestamp * 1000);
+        const dateString = date.toISOString().split('T')[0];
+        allDates.push(dateString);
+      });
+    }
+    
+    // Trouver la date la plus ancienne
+    if (allDates.length > 0) {
+      // Convertir les dates YYYYMMDD en YYYY-MM-DD pour le tri
+      const sortedDates = allDates
+        .map(date => {
+          // Si format YYYYMMDD, convertir en YYYY-MM-DD
+          if (date.length === 8 && !date.includes('-')) {
+            return `${date.substring(0, 4)}-${date.substring(4, 6)}-${date.substring(6, 8)}`;
+          }
+          return date;
+        })
+        .sort();
+      const oldestDate = sortedDates[0];
+      return {
+        start: oldestDate,
+        end: new Date().toISOString().split('T')[0] // Aujourd'hui
+      };
+    }
+    
+    // Fallback : 1er janvier de l'année en cours
+    const today = new Date().toISOString().split('T')[0];
+    const startOfYear = new Date(new Date().getFullYear(), 0, 1).toISOString().split('T')[0];
+    return { start: startOfYear, end: today };
+  };
+  
+  const [dateRange, setDateRange] = useState<{ start: string; end: string }>(() => {
+    const today = new Date().toISOString().split('T')[0];
+    const startOfYear = new Date(new Date().getFullYear(), 0, 1).toISOString().split('T')[0];
+    return { start: startOfYear, end: today };
+  });
+  
+  // Mettre à jour la date range quand les données sont chargées
+  useEffect(() => {
+    if (data || dataV2) {
+      // Recalculer avec une fonction inline pour éviter les dépendances circulaires
+      const allDates: string[] = [];
+      
+      const usdcData = data?.data?.results?.[0]?.data?.interests?.USDC;
+      const wxdaiData = data?.data?.results?.[0]?.data?.interests?.WXDAI;
+      const v2Data = dataV2?.data?.results?.[0]?.data?.interests?.WXDAI;
+      
+      if (usdcData?.borrow?.dailyDetails) {
+        usdcData.borrow.dailyDetails.forEach((detail: any) => allDates.push(detail.date));
+      }
+      if (usdcData?.supply?.dailyDetails) {
+        usdcData.supply.dailyDetails.forEach((detail: any) => allDates.push(detail.date));
+      }
+      if (wxdaiData?.borrow?.dailyDetails) {
+        wxdaiData.borrow.dailyDetails.forEach((detail: any) => allDates.push(detail.date));
+      }
+      if (wxdaiData?.supply?.dailyDetails) {
+        wxdaiData.supply.dailyDetails.forEach((detail: any) => allDates.push(detail.date));
+      }
+      if (v2Data?.borrow?.dailyDetails) {
+        v2Data.borrow.dailyDetails.forEach((detail: any) => allDates.push(detail.date));
+      }
+      if (v2Data?.supply?.dailyDetails) {
+        v2Data.supply.dailyDetails.forEach((detail: any) => allDates.push(detail.date));
+      }
+      
+      // Collecter les dates des transactions
+      const transactions = prepareAllTransactions();
+      if (transactions) {
+        transactions.forEach((tx: any) => {
+          const date = new Date(tx.timestamp * 1000);
+          const dateString = date.toISOString().split('T')[0];
+          allDates.push(dateString);
+        });
+      }
+      
+      if (allDates.length > 0) {
+        const sortedDates = allDates
+          .map(date => {
+            if (date.length === 8 && !date.includes('-')) {
+              return `${date.substring(0, 4)}-${date.substring(4, 6)}-${date.substring(6, 8)}`;
+            }
+            return date;
+          })
+          .sort();
+        const oldestDate = sortedDates[0];
+        setDateRange({
+          start: oldestDate,
+          end: new Date().toISOString().split('T')[0]
+        });
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data, dataV2]);
 
   // Fonction pour formater les montants (conversion depuis base units)
   const formatAmount = (amount: string, decimals = 6): number => {
@@ -389,11 +519,15 @@ export default function Home() {
         <div className="min-h-screen bg-gray-50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
 
+            {/* Encart unifié : RMM Analytics + Filters */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6 lg:p-8 mb-6 sm:mb-8">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              {/* Header : Titre et adresse */}
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 pb-6 border-b border-gray-200">
                 <div className="text-center sm:text-left">
-                  <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">RMM Analytics</h1>
+                  <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">RMM GainOrLoss</h1>
                   <p className="text-sm sm:text-base text-gray-600">
+                    Interest analytics and transaction history for your RMM positions.
+                    <br />
                     Address: <span className="font-mono bg-gray-100 px-2 sm:px-3 py-1 rounded-lg text-xs sm:text-sm break-all">{address}</span>
                   </p>
                 </div>
@@ -404,13 +538,84 @@ export default function Home() {
                   Try another address
                 </button>
               </div>
+
+              {/* Section de filtres partagés */}
+              <div>
+                <h2 className="text-xl font-bold text-gray-900 mb-4">Pick only what you want to see</h2>
+                <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center">
+                  {/* Sélection des tokens */}
+                  <div className="flex flex-wrap items-center gap-3">
+                    <label className="text-sm font-medium text-gray-700">Tokens:</label>
+                    {[
+                      { key: 'USDC', label: 'USDC' },
+                      { key: 'WXDAI', label: 'WXDAI' },
+                      { key: 'WXDAI_V2', label: 'WXDAI V2' }
+                    ].map(({ key, label }) => (
+                      <label key={key} className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={selectedTokens.includes(key)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedTokens([...selectedTokens, key]);
+                            } else {
+                              setSelectedTokens(selectedTokens.filter(t => t !== key));
+                            }
+                          }}
+                          className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        />
+                        <span className="text-sm text-gray-700">{label}</span>
+                      </label>
+                    ))}
+                  </div>
+
+                  {/* Sélection de la plage de dates */}
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                    <div className="flex items-center gap-2">
+                      <label className="text-sm font-medium text-gray-700">From:</label>
+                      <input
+                        type="date"
+                        lang="en"
+                        value={dateRange.start}
+                        onChange={(e) => setDateRange(prev => ({ ...prev, start: e.target.value }))}
+                        className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <label className="text-sm font-medium text-gray-700">To:</label>
+                      <input
+                        type="date"
+                        lang="en"
+                        value={dateRange.end}
+                        onChange={(e) => setDateRange(prev => ({ ...prev, end: e.target.value }))}
+                        className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Bouton Reset */}
+                  <button
+                    onClick={() => {
+                      setSelectedTokens(['USDC', 'WXDAI', 'WXDAI_V2']);
+                      const calculatedRange = calculateDefaultDateRange();
+                      setDateRange(calculatedRange);
+                    }}
+                    className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors text-sm font-medium"
+                  >
+                    🔄 Reset Filters
+                  </button>
+                </div>
+              </div>
             </div>
+
             <FinancialSummary
               usdcData={usdcData}
               wxdaiData={wxdaiData}
               v2Data={dataV2?.data?.results?.[0]?.data?.interests?.WXDAI}
               userAddress={address}
-              transactions={prepareAllTransactions()} 
+              transactions={prepareAllTransactions()}
+              selectedTokens={selectedTokens}
+              dateRange={dateRange}
             />
 
             {/* Erreur */}
@@ -432,19 +637,19 @@ export default function Home() {
                   <div className="bg-red-50 border border-red-100 p-6 rounded-xl">
                     <h3 className="text-sm font-medium text-red-700 mb-2">Borrow Interest</h3>
                     <p className="text-3xl font-bold text-red-600">
-                      {formatAmount(usdcTotalDebtInterest).toFixed(2)} USDC
+                      {formatAmount(usdcTotalDebtInterest.toString()).toFixed(2)} USDC
                     </p>
                   </div>
                   <div className="bg-green-50 border border-green-100 p-6 rounded-xl">
                     <h3 className="text-sm font-medium text-green-700 mb-2">Supply Interest</h3>
                     <p className="text-3xl font-bold text-green-600">
-                      {formatAmount(usdcTotalSupplyInterest).toFixed(2)} USDC
+                      {formatAmount(usdcTotalSupplyInterest.toString()).toFixed(2)} USDC
                     </p>
                   </div>
                   <div className="bg-blue-50 border border-blue-100 p-6 rounded-xl">
                     <h3 className="text-sm font-medium text-blue-700 mb-2">PnL Net</h3>
                     <p className={`text-3xl font-bold ${usdcNetInterest >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      {formatAmount(usdcNetInterest).toFixed(2)} USDC
+                      {formatAmount(usdcNetInterest.toString()).toFixed(2)} USDC
                     </p>
                   </div>
                 </div>
@@ -482,19 +687,19 @@ export default function Home() {
                   <div className="bg-red-50 border border-red-100 p-6 rounded-xl">
                     <h3 className="text-sm font-medium text-red-700 mb-2">Borrow Interest</h3>
                     <p className="text-3xl font-bold text-red-600">
-                      {formatAmount(wxdaiTotalDebtInterest, 18).toFixed(2)} WXDAI
+                      {formatAmount(wxdaiTotalDebtInterest.toString(), 18).toFixed(2)} WXDAI
                     </p>
                   </div>
                   <div className="bg-green-50 border border-green-100 p-6 rounded-xl">
                     <h3 className="text-sm font-medium text-green-700 mb-2">Supply Interest</h3>
                     <p className="text-3xl font-bold text-green-600">
-                      {formatAmount(wxdaiTotalSupplyInterest, 18).toFixed(2)} WXDAI
+                      {formatAmount(wxdaiTotalSupplyInterest.toString(), 18).toFixed(2)} WXDAI
                     </p>
                   </div>
                   <div className="bg-blue-50 border border-blue-100 p-6 rounded-xl">
                     <h3 className="text-sm font-medium text-blue-700 mb-2">PnL Net</h3>
                     <p className={`text-3xl font-bold ${wxdaiNetInterest >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      {formatAmount(wxdaiNetInterest, 18).toFixed(2)} WXDAI
+                      {formatAmount(wxdaiNetInterest.toString(), 18).toFixed(2)} WXDAI
                     </p>
                   </div>
                 </div>
@@ -555,19 +760,19 @@ export default function Home() {
                                 <div className="bg-red-50 border border-red-100 p-6 rounded-xl">
                                   <h3 className="text-sm font-medium text-red-700 mb-2">Borrow Interest</h3>
                                   <p className="text-3xl font-bold text-red-600">
-                                    {formatAmount(v2WxdaiData.borrow.totalInterest, 18).toFixed(2)} WXDAI
+                                    {formatAmount(v2WxdaiData.borrow.totalInterest.toString(), 18).toFixed(2)} WXDAI
                                   </p>
                                 </div>
                                 <div className="bg-green-50 border border-green-100 p-6 rounded-xl">
                                   <h3 className="text-sm font-medium text-green-700 mb-2">Supply Interest</h3>
                                   <p className="text-3xl font-bold text-green-600">
-                                    {formatAmount(v2WxdaiData.supply.totalInterest, 18).toFixed(2)} WXDAI
+                                    {formatAmount(v2WxdaiData.supply.totalInterest.toString(), 18).toFixed(2)} WXDAI
                                   </p>
                                 </div>
                                 <div className="bg-blue-50 border border-blue-100 p-6 rounded-xl">
                                   <h3 className="text-sm font-medium text-blue-700 mb-2">PnL Net</h3>
                                   <p className={`text-3xl font-bold ${(parseFloat(v2WxdaiData.supply.totalInterest) - parseFloat(v2WxdaiData.borrow.totalInterest)) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                    {formatAmount(parseFloat(v2WxdaiData.supply.totalInterest) - parseFloat(v2WxdaiData.borrow.totalInterest), 18).toFixed(2)} WXDAI
+                                    {formatAmount((parseFloat(v2WxdaiData.supply.totalInterest) - parseFloat(v2WxdaiData.borrow.totalInterest)).toString(), 18).toFixed(2)} WXDAI
                                   </p>
                                 </div>
                               </div>
@@ -621,6 +826,8 @@ export default function Home() {
                 title="Transactions"
                 isCollapsed={isCollapsed}
                 onToggleCollapse={() => setCollapsed(!isCollapsed)}
+                selectedTokens={selectedTokens}
+                dateRange={dateRange}
               />
             )}
           </div>

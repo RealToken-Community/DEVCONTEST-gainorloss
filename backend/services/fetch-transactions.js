@@ -136,7 +136,7 @@ async function fetchAllTransactionsV3(userAddress) {
         hasMore = false;
       } else {
         skip += LIMIT;
-        console.log(`⏭️  Pagination suivante: skip=${skip}`);
+        console.log(`⏭️  Pagination suivante1: skip=${skip}`);
       }
     }
 

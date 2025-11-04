@@ -76,6 +76,7 @@ async function fetchAllTokenTransactions(
         
         // VÉRIFIER SI IL Y A PLUS DE DONNÉES
         if (transactionCount < 1000) {
+          console.log(`DBG transactionCount: ${transactionCount}`);
           hasMoreData = false;
         } else {
           console.log(`🔄 Plus de données disponibles, page suivante...`);
