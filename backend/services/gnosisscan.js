@@ -5,7 +5,8 @@ const fetch = require('node-fetch');
 
 // Configuration Gnosisscan
 const GNOSISSCAN_API_URL = 'https://api.etherscan.io/v2/api';
-const API_KEY = process.env.GNOSISSCAN_API_KEY || '';
+// Utilise NEXT_PUBLIC_GNOSISSCAN_API_KEY comme fallback pour compatibilité avec le .env partagé
+const API_KEY = process.env.GNOSISSCAN_API_KEY || process.env.NEXT_PUBLIC_GNOSISSCAN_API_KEY || '';
 
 /**
  * Récupère toutes les transactions de token avec pagination et respect des limites d'API

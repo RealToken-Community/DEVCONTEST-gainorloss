@@ -445,7 +445,7 @@ const FinancialSummary: React.FC<FinancialSummaryProps> = ({
               <th className="text-left py-3 px-4 font-semibold text-gray-900">Token</th>
               <th className="text-left py-3 px-4 font-semibold text-gray-900">Version</th>
               <th className="text-left py-3 px-4 font-semibold text-gray-900">
-                Intérêts Dette
+                Debt Interest
                 <a 
                   href={`https://gnosisscan.io/token/${TOKENS.USDC.debtAddress}?a=${userAddress}`}
                   target="_blank"
@@ -457,7 +457,7 @@ const FinancialSummary: React.FC<FinancialSummaryProps> = ({
                 </a>
               </th>
               <th className="text-left py-3 px-4 font-semibold text-gray-900">
-                Intérêts Supply
+                Supply Interest
                 <a 
                   href={`https://gnosisscan.io/token/${TOKENS.USDC.supplyAddress}?a=${userAddress}`}
                   target="_blank"
@@ -468,7 +468,7 @@ const FinancialSummary: React.FC<FinancialSummaryProps> = ({
                   
                 </a>
               </th>
-              <th className="text-left py-3 px-4 font-semibold text-gray-900">Gain Net</th>
+              <th className="text-left py-3 px-4 font-semibold text-gray-900">Net Interest</th>
             </tr>
           </thead>
           <tbody>
