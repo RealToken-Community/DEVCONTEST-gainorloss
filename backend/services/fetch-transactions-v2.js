@@ -1,6 +1,7 @@
 // Configuration TheGraph V2
 const THEGRAPH_URL_V2 = 'https://api.thegraph.com/subgraphs/id/QmXT8Cpkjevu2sPN1fKkwb7Px9Wqj84DALA2TQ8nokhj7e';
-const API_KEY = process.env.THEGRAPH_API_KEY;
+// Utilise NEXT_PUBLIC_THEGRAPH_API_KEY comme fallback pour compatibilité avec le .env partagé
+const API_KEY = process.env.THEGRAPH_API_KEY || process.env.NEXT_PUBLIC_THEGRAPH_API_KEY;
 
 // Client GraphQL (utilise un import dynamique pour ES modules)
 let client = null;

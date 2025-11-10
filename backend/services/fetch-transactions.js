@@ -1,6 +1,7 @@
 // Configuration TheGraph V3
 const THEGRAPH_URL_V3 = 'https://api.thegraph.com/subgraphs/id/QmVH7ota6caVV2ceLY91KYYh6BJs2zeMScTTYgKDpt7VRg';
-const API_KEY = process.env.THEGRAPH_API_KEY;
+// Utilise NEXT_PUBLIC_THEGRAPH_API_KEY comme fallback pour compatibilité avec le .env partagé
+const API_KEY = process.env.THEGRAPH_API_KEY || process.env.NEXT_PUBLIC_THEGRAPH_API_KEY;
 
 // Client GraphQL (utilise un import dynamique pour ES modules)
 let client = null;
